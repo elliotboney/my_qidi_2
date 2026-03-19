@@ -1,0 +1,9 @@
+[submodule "Klipper-Adaptive-Meshing-Purging"]
+	path = Klipper-Adaptive-Meshing-Purging
+	url = https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
+[submodule "fluidd-config"]
+	path = fluidd-config
+	url = https://github.com/fluidd-core/fluidd-config.git
+[submodule "moonraker-timelapse"]
+	path = moonraker-timelapse
+	url = https://github.com/mainsail-crew/moonraker-timelapse.git
