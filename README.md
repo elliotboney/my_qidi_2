@@ -35,6 +35,24 @@ The [Qidi Q2](https://qidi3dprinter.com/products/q2) is a fully enclosed CoreXY 
 <!-- | [fluidd.cfg](printer_data/config/fluidd.cfg) | Fluidd client macros (symlink to fluidd-config submodule) | -->
 <!-- | [timelapse.cfg](printer_data/config/timelapse.cfg) | Timelapse Klipper macros (symlink to moonraker-timelapse submodule) | -->
 
+## Klippy Extras
+
+The [klippy_extras/](klippy_extras/) directory contains Qidi's custom Klipper modules, synced from the printer's `/home/mks/klipper/klippy/extras/` directory. Qidi runs a [modified fork of Klipper](https://github.com/QIDITECH/klipper) with proprietary additions — these are **not** part of mainline Klipper and include:
+
+- **Proprietary compiled `.so` modules** (10 files) — closed-source binary extensions not in [mainline Klipper](https://github.com/Klipper3d/klipper/tree/master/klippy/extras):
+  - `box_stepper.so`, `box_extras.so`, `box_rfid.so`, `box_detect.so` — Qidi Box hardware drivers
+  - `air.so`, `heater_air_core.so`, `aht20_f.so` — Air/chamber heating and sensor drivers
+  - `buttons_irq.so`, `cs1237.so`, `hx711.so` — Input/sensor hardware drivers
+- **Qidi-added Python modules** (13 files) — custom modules not found in mainline Klipper:
+  - `color_feeder.py`, `feed_slot.py`, `box_heater_fan.py` — Qidi Box multi-material logic
+  - `chamber_fan.py`, `heater_air.py`, `heater_feng.py` — Chamber/air heating control
+  - `echelon_stepper.py`, `closed_loop.py` — Custom stepper/motor control
+  - `autotune_tmc.py`, `motor_constants.py`, `motor_database.cfg` — TMC driver autotuning
+  - `gcode_shell_command.py`, `probe_air.py` — Utility extensions
+Only Qidi-specific files are tracked here — upstream Klipper modules (both identical and version-drift copies) have been removed. The full set can always be synced from the printer if needed
+
+> **Warning:** Qidi [explicitly warns](https://qidi3d.com/pages/software-firmware) against updating to mainline Klipper — their firmware depends on these custom modules, and replacing them will break printer functionality. These files are tracked here for reference and diffing against factory updates.
+
 ## Documentation
 
 - [Qidi Box Multi-Material System](Qidi_Box.md) - Specifications, setup notes, common issues, and fixes for the Qidi Box

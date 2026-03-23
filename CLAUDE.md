@@ -29,6 +29,22 @@ This repo tracks custom/modified Klipper configuration files for a Qidi Q2 3D pr
   - `KAMP_Settings.cfg` — KAMP settings
   - Symlinks: `fluidd.cfg`, `timelapse.cfg`, `KAMP/` → submodules
 - `Qidi_Box.md` — Documentation on the Qidi Box system
+- `klippy_extras/` — Qidi's custom Klipper modules synced from the printer
+  - Qidi runs a modified fork of Klipper, NOT mainline — see https://github.com/QIDITECH/klipper
+  - Proprietary `.so` binaries (10 files, Qidi-added, closed-source, not editable):
+    - `box_stepper.so`, `box_extras.so`, `box_rfid.so`, `box_detect.so` — Box hardware drivers
+    - `air.so`, `heater_air_core.so`, `aht20_f.so` — Air/chamber heating and sensors
+    - `buttons_irq.so`, `cs1237.so`, `hx711.so` — Input/sensor hardware
+  - Qidi-added Python modules (13 files, not in mainline Klipper):
+    - `color_feeder.py`, `feed_slot.py`, `box_heater_fan.py` — Box multi-material logic
+    - `chamber_fan.py`, `heater_air.py`, `heater_feng.py` — Chamber/air heating
+    - `echelon_stepper.py`, `closed_loop.py` — Custom stepper control
+    - `autotune_tmc.py`, `motor_constants.py`, `motor_database.cfg` — TMC autotuning
+    - `gcode_shell_command.py`, `probe_air.py` — Utility extensions
+  - Upstream Klipper extras have been removed — only Qidi-specific files are tracked
+  - Full set can be re-synced from printer if needed
+  - Synced from printer via: `rsync -avz mks@qidi:~/klipper/klippy/extras/ klippy_extras/ --exclude "__pycache__/"`
+  - **Do NOT update to mainline Klipper** — Qidi's firmware depends on these custom modules
 
 ## Git Submodules
 - `Klipper-Adaptive-Meshing-Purging/` — KAMP (adaptive bed mesh + purging)
@@ -45,6 +61,7 @@ This repo tracks custom/modified Klipper configuration files for a Qidi Q2 3D pr
 - Klipper socket: `/home/mks/printer_data/comms/klippy.sock`
 - Timelapse output: `~/printer_data/timelapse/`
 - PLR scripts: `/home/mks/scripts/plr/`
+- Klippy extras (Qidi custom): `/home/mks/klipper/klippy/extras/`
 
 ## Known Issues
 - `UNLOAD_FILAMENT` macro in `box.cfg` had a bug: `G1 E25 F300` should be `G1 E-25 F300` (missing negative sign causes filament push instead of retract)
