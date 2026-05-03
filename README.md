@@ -53,6 +53,12 @@ Only Qidi-specific files are tracked here — upstream Klipper modules (both ide
 
 > **Warning:** Qidi [explicitly warns](https://qidi3d.com/pages/software-firmware) against updating to mainline Klipper — their firmware depends on these custom modules, and replacing them will break printer functionality. These files are tracked here for reference and diffing against factory updates.
 
+## Notable Customizations
+
+### Slicer-side
+
+- **[`slicer_configs/change_filament.gcode`](slicer_configs/change_filament.gcode) — removed redundant heat-up/cool-down on tool change.** The stock Orca filament-change script ramped the hotend to `nozzle_temperature_range_high` (the upper end of the filament's temp range) for the initial purge, then dropped back to `new_filament_temp` and waited via `M109` for the cooldown. On same-material multi-color prints this added a needless heat + cool cycle to every swap. The script now stays at `new_filament_temp` for the whole change and the trailing `M109` becomes a no-op. If you ever swap to a hotter material mid-print you'll want to revisit this.
+
 ## Documentation
 
 - [Qidi Box Multi-Material System](Qidi_Box.md) - Specifications, setup notes, common issues, and fixes for the Qidi Box

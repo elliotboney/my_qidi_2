@@ -1,36 +1,37 @@
+; Version 0.2 of this:
 { if current_extruder != next_extruder }
-    M118 Changing Filament G-Code Start: flush lengths 1:{flush_length_1}, 2:{flush_length_2}, 3:{flush_length_3}, 4:{flush_length_4}
+    MARK_TOOL_USED TOOL=[next_extruder]
+    M1189 Changing Filament G-Code Start: flush lengths 1:{flush_length_1}, 2:{flush_length_2}, 3:{flush_length_3}, 4:{flush_length_4}
     G1 Z{max_layer_z + 3.0} F1200
     TOOL_CHANGE_START F=[current_extruder] T=[next_extruder]
+    MARK_TOOL_USED TOOL=[next_extruder]
     BUFFER_MONITORING ENABLE=0
     DISABLE_ALL_SENSOR
     M106 S255
     MOVE_TO_TRASH
     {if long_retractions_when_cut[previous_extruder]}
+        M1189 long retractions when cut true, retracting {retraction_distances_when_cut[previous_extruder]}mm at F{old_filament_e_feedrate} 
         G1 E-{retraction_distances_when_cut[previous_extruder]} F{old_filament_e_feedrate}
     {else}
+        M1189 long retractions when cut false, retracting 10mm at F{old_filament_e_feedrate}
         G1 E-10 F{old_filament_e_feedrate}
     {endif}
     M400
     CUT_FILAMENT T=[current_extruder]
     MOVE_TO_TRASH
-    M106 P2 S0
+    M106 P2 S0 ; turn off part cooling fan to reduce oozing while moving to trash
     UNLOAD_T[current_extruder]
     T[next_extruder]
-    {if nozzle_temperature_range_high[current_extruder] >= nozzle_temperature_range_high[next_extruder]}
-        M104 S{nozzle_temperature_range_high[current_extruder]}
-    {else}
-        M104 S{nozzle_temperature_range_high[next_extruder]}
-    {endif}
+    M104 S[new_filament_temp]
     ; FLUSH_START
     M106 S25
-    G1 E80 F300
+    G1 E80 F300 ; see if this number is correct later
     ; FLUSH_END
     {if long_retractions_when_cut[previous_extruder]}
         G1 E{retraction_distances_when_cut[previous_extruder]} F{old_filament_e_feedrate}
     {endif}
     {if flush_length_1 > 1}
-        M118 flush_length_1 > 1 flush start
+        M1189 flush_length_1 > 1 flush start
         ; FLUSH_START
         {if flush_length_1 > 23.7}
             G1 E23.7 F{old_filament_e_feedrate}
@@ -49,7 +50,7 @@
         ; FLUSH_END
     {endif}
     {if flush_length_2 > 1}
-        M118 flush_length_2 > 1 flush start
+        M1189 flush_length_2 > 1 flush start
         ; FLUSH_START
         G1 X92 F9000
         G1 E[old_retract_length_toolchange] F300
@@ -67,7 +68,7 @@
         ; FLUSH_END
     {endif}
     {if flush_length_3 > 1}
-        M118 flush_length_3 > 1 flush start
+        M1189 flush_length_3 > 1 flush start
         ; FLUSH_START
         G1 X85 F9000
         G1 E[new_retract_length_toolchange] F300
@@ -85,7 +86,7 @@
         ; FLUSH_END
     {endif}
     {if flush_length_4 > 1}
-        M118 flush_length_4 > 1 flush start
+        M1189 flush_length_4 > 1 flush start
         ; FLUSH_START
         G1 X92 F9000
         G1 E[new_retract_length_toolchange] F300
@@ -104,10 +105,9 @@
     {endif}
     M400
     M106 S255
-    M104 S[new_filament_temp]
     INIT_SYNC_BUFFER_STATE
     BUFFER_MONITORING ENABLE=1
-    G1 E10 F25 
+    G1 E10 F25
     M109 S[new_filament_temp]
     G1 E-5 F1800
     CLEAR_OOZE
@@ -116,5 +116,5 @@
     M106 S0
     G1 E2 F1800
     ENABLE_ALL_SENSOR
-    M118 Changing Filament G-Code END
+    M1189 Changing Filament G-Code END
 {endif}
