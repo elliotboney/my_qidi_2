@@ -64,7 +64,6 @@ This repo tracks custom/modified Klipper configuration files for a Qidi Q2 3D pr
 - Klippy extras (Qidi custom): `/home/mks/klipper/klippy/extras/`
 
 ## Known Issues
-- `UNLOAD_FILAMENT` macro in `box.cfg` had a bug: `G1 E25 F300` should be `G1 E-25 F300` (missing negative sign causes filament push instead of retract)
 - PLA/PETG printing with enclosed chamber can soften filament in PTFE tubes — keep top cover open
 
 ## Working on This Repo

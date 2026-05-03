@@ -63,12 +63,14 @@ Only Qidi-specific files are tracked here — upstream Klipper modules (both ide
 
 Adapted from the German community guide [Qidi Q2 Software Upgrade — KAMP 2.0, Lüftersteuerung, Cutterschutz, Smart Filter](https://forum.drucktipps3d.de/forum/thread/46161-guide-qidi-q2-software-upgrade-kamp-2-0-l%C3%BCftersteuerung-cutterschutz-smart-filte/?l=2) on drucktipps3d.de, with local tweaks for this printer.
 
-- **`PRINT_START` (rewritten in `gcode_macro.cfg`)** — replaces the old `PRINT_START_V0`. Computes an adaptive bed mesh inline from slicer-supplied `MESH_MIN`/`MESH_MAX`, picks `bicubic` vs `lagrange` based on probe count, and calls `_BED_MESH_CALIBRATE` directly (`PROFILE=kamp_Q2`) instead of relying on the stock KAMP wrapper. Logs the calculated mesh bounds + algorithm to the console at start.
+- **`PRINT_START` (rewritten in `gcode_macro.cfg`)** — replaces the old `PRINT_START_V0`. Calls plain `BED_MESH_CALIBRATE` so the KAMP wrapper drives adaptive meshing from per-object polygons (Orca emits `EXCLUDE_OBJECT_DEFINE` before `PRINT_START`), with KAMP's verbose output logged to console. After calibration runs `SAVE_CONFIG_QD` to persist the mesh to printer.cfg without restarting Klippy — gives PLR something to load on power-loss recovery.
 - **`PRINT_END` (rewritten)** — adds material-aware cool-down. Tracks which tools were actually used during the print via `MARK_TOOL_USED`, then on print end checks if any used material is hazardous (ASA / ABS / PC / PA / Nylon / Carbon / PPS). Hazardous prints wait for chamber to drop below 50 °C before activating filtering for 15 min; non-hazardous prints kick off a 5-min ventilation cycle immediately.
 - **Smart filter / cool-down delayed gcodes** — `SMART_COOLING_MONITOR`, `FILTER_START_ACTION`, `FILTER_STOP` drive the chamber circulation fan after print end. `SET_MATERIAL_VAR` is called from the slicer start gcode to populate the per-tool material list.
 - **`BOX_PRINT_START_2`** — replacement for the stock `BOX_PRINT_START` with extracted/adapted purge logic for cleaner Box transitions.
 - **`CANCEL_PRINT` / `PAUSE` rebuilt** — now `rename_existing` the base versions instead of the old V0 commented variants. Cancel parks at the purge chute, triggers timelapse render, and does a full sensor/heater/box shutdown.
 - **`smart_q2_macro.cfg` removed** — it was the staging file while porting these macros from the forum guide; everything now lives in `gcode_macro.cfg` and the include was dropped from `printer.cfg`.
+- **PRINT_START purge dedup** — `EXTRUSION_AND_FLUSH` (a 200mm full purge through the trash zone) is now gated to only run on same-slot reprints, where `BOX_PRINT_START_2` was a no-op. On tool-change prints, `BOX_PRINT_START_2` already does an identical 200mm purge as part of its load sequence, so the second flush was pure duplicate. Saves ~200mm filament per tool-change print.
+- **Idle timeout 12h → 30min** — `printer.cfg [idle_timeout]` was set to 43200s (a botched cancel could leave the hotend at 280C for half a day); now 1800s, which still covers normal mid-print interventions like Box swaps and RFID re-scans.
 
 ## Documentation
 
