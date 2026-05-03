@@ -32,31 +32,20 @@ Severity legend: **C**ritical / **H**igh / **M**edium / **L**ow / **N**it
 - [x] **F08 [H] `idle_timeout` reduced 43200s → 1800s** — `printer.cfg:460`. 30 min covers normal mid-print interventions (Box swap, RFID re-scan, walking away briefly) while still cutting heaters in time if something goes wrong.
 - [x] **F11 [M] PRINT_START purge dedup** — `gcode_macro.cfg` PRINT_START now gates `EXTRUSION_AND_FLUSH` on `filament_detected and last_load_slot == value_t` (same-slot reprint). On tool-change prints `BOX_PRINT_START_2` already runs the identical 200mm purge loop as part of its load sequence, so the second flush was pure duplicate. Saves ~200mm filament per tool-change print. `CLEAR_NOZZLE` (brush scrub) and `LINE_PURGE` left alone — they do non-redundant work.
 - [x] **F12 [M] M1189 logging refactor finished** — converted 12 stale `G118` calls (RESUME_PRINT, RESUME, RESUME_1, M4030, M4031, CUT_FILAMENT_1) to `M1189`. `G118` is not a real Klipper command — these had been silently dropped. Also converted 1 raw `M118` in `plr.cfg save_last_file` → `M1189`. Left untouched: 7 `M117` (LCD line writes — different purpose) and 1 `M1188 Canceled print!` (M1188 is a real defined macro at gcode_macro.cfg:12, not a typo — it's an accent-colored user message).
+- [x] **F10 [H] CANCEL_PRINT now retracts before park** — added `M83 / G1 E-3 F1800` (gated on `printer.extruder.can_extrude` so it's a no-op when hotend is cold). Prevents blob welding to model on cancel-during-extrude.
+- [x] **F14 [M] `M83` before E moves in UNLOAD_FILAMENT** — added `M83` between `UNLOAD_T{T}` and `G1 E25 F300`. After `EXTRUDER_UNLOAD` returns, E mode was non-obvious — `cmd_CUT_FILAMENT` (decompiled) explicitly sets M83 for the same reason.
+- [x] **F25 [L] `params.T` now defaults to 0** — `gcode_macro.cfg` UNLOAD_FILAMENT: `params.T|int` → `params.T|default(0)|int`. Console-typed `UNLOAD_FILAMENT` (no T) no longer crashes after M1189 already logged.
+- [x] **F13 [M] DEFERRED — original review finding was wrong.** `M104 S140` at line 174 is intentional cool-down: `BOX_PRINT_START_2` / `EXTRUSION_AND_FLUSH` / `CLEAR_NOZZLE` heat to `hotendtemp` (e.g. 220) before this point, so line 174 cools back to 140 for probing. The reviewer missed the intermediate `M109` calls. Removing it would probe at 190°C → ooze. Closed as not-a-bug.
+- [x] **F07 [H] DEFERRED — leave Qidi factory `max_error: 300` alone.** Slow chamber heat-up + low max_temp (70°C) means the permissive cumulative-error window is likely intentional. Tightening to stock-Klipper 120 would risk spurious runaway trips during normal chamber climbs.
+- [x] **F09 [H] DEFERRED — cold-extrude guard not needed in practice.** Real-world use is always through PRINT_END / slicer / mid-print where hotend is already hot. Manual cold-console unload is an edge case the user can manage themselves. Box-side filament motion through PTFE tubes already works reliably; not worth adding friction or surprise auto-heat.
 
 ---
 
 ## Open — Critical / High
 
-- [ ] **F07 [H] `verify_heater chamber max_error: 300`** — `printer.cfg:314`. Stock default 120. With 70°C max chamber + Qidi PTFE-softening risk, suspiciously permissive. Verify against fresh factory config before changing.
-
-- [ ] **F09 [H] No thermal interlock on UNLOAD/LOAD**
-  - `box.cfg:13-25`, `gcode_macro.cfg:328-341`, `box1.cfg:104-326` — E moves issued without `min_extrude_temp` guard.
-  - Cold-console invocation half-executes (cuts but doesn't retract).
-  - **Action:** add temp guard or auto-`M109` from RFID before E moves. Open question on which.
-
-- [ ] **F10 [H] CANCEL_PRINT has no retract before park** — `gcode_macro.cfg:843-850`. Long cancel-during-extrude leaves blob welded to model. PRINT_END does retract; CANCEL_PRINT doesn't.
-
 ---
 
 ## Open — Medium
-
-
-- [ ] **F13 [M] Hotend held at 140°C through Z_TILT + mesh probe**
-  - `gcode_macro.cfg:162` and `:203` both `M104 S140` with no waits between.
-  - 140°C is hot enough to ooze and contaminate probe samples.
-  - **Action:** drop the line-203 `M104 S140`. Optionally lower line-162 to S150 if probing wants ≤150°C.
-
-- [ ] **F14 [M] Missing `M83` before relative E move in UNLOAD** — `box.cfg:13-25`. After `EXTRUDER_UNLOAD`, E mode is non-obvious; `G1 E25 F300` could be interpreted absolute. `cmd_CUT_FILAMENT` (decompiled) explicitly sets `M83` before its E move.
 
 - [ ] **F15 [M] Macro guard silent no-op when `enable_box == 0`** — `box.cfg:13-25` and dup. Whole body wrapped in `enable_box == 1`. UI manual unload appears to do nothing in single-spool mode. Add `{% else %} M118 Box not enabled %}`.
 
@@ -85,8 +74,6 @@ Severity legend: **C**ritical / **H**igh / **M**edium / **L**ow / **N**it
 - [ ] **F23 [L] `extruder smooth_time: 0.000001`** — `printer.cfg:74`. Effectively disables thermistor smoothing. Stock default 1.0s. With MAX6675 thermocouple latency, may produce false `verify_heater` trips. Qidi-shipped oddity.
 
 - [ ] **F24 [L] `M104 S0` after retract in UNLOAD breaks fast reload flow** — `box.cfg:22`, `gcode_macro.cfg:338`. Forces full reheat if user is swap-unload-reload. Per commit `9ee190f` deliberately preserves heat across changes — this looks regressive for the swap case but correct for user-finished-printing case. Confirm intent.
-
-- [ ] **F25 [L] `params.T|int` with no default** — `box.cfg:16`, `gcode_macro.cfg:333`. Console-typed `UNLOAD_FILAMENT` with no T crashes after M1189 already logged. Better: `params.T|default(0)|int`.
 
 - [ ] **F26 [L] T4-T15 / UNLOAD_T4-T15 macros are dead code** — `box1.cfg:160-326`. `box_count = 1` in saved_variables → these reference slot4-slot15 which only exist in box2-4.cfg, which aren't included. Not active bugs but clutter.
 
@@ -126,10 +113,9 @@ Severity legend: **C**ritical / **H**igh / **M**edium / **L**ow / **N**it
 
 ## Open questions
 
-1. **F09** — for cold-extrude guard: hard refuse, or auto-`M109` from RFID temp?
-3. **F19** — does the Qidi Box dryer "bed" temp apply to a heated plate the spool sits on, or to chamber air?
-4. **PLR scripts** — what's inside `~/scripts/plr/plr.sh` and `~/scripts/plr/update_gcode_lines.sh`? Needed to fully review F05 / PLR resume sequence.
-5. **F17** — is the Q2 chamber supposed to use Qidi's `heater_air` module, or is `heater_generic chamber` the correct stock-Q2 setup?
+1. **F19** — does the Qidi Box dryer "bed" temp apply to a heated plate the spool sits on, or to chamber air?
+2. **PLR scripts** — what's inside `~/scripts/plr/plr.sh` and `~/scripts/plr/update_gcode_lines.sh`? Needed to fully review F05 / PLR resume sequence.
+3. **F17** — is the Q2 chamber supposed to use Qidi's `heater_air` module, or is `heater_generic chamber` the correct stock-Q2 setup?
 
 ---
 
