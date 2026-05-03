@@ -1,5 +1,5 @@
 #!/bin/bash
-rsync -avz mks@qidi:~/printer_data/ printer_data/ --exclude backup --exclude gcodes/ --exclude logs/ --exclude "*.log" --exclude timelapse/ --exclude ".cache" --exclude ".temp" --exclude ".git" --exclude "comms/" --exclude "database/"  --exclude "*.bkp"
+rsync -avz mks@qidi:~/printer_data/ printer_data/ --exclude backup --exclude gcodes/ --exclude logs/ --exclude "*.log" --exclude timelapse/ --exclude ".cache" --exclude ".temp" --exclude ".git" --exclude "comms/" --exclude "database/"  --exclude "*.bkp" --exclude "config/saved_variables.cfg"
 # rsync -avz mks@qidi:~/klipper/klippy/extras/ klippy_extras/ --exclude "__pycache__/"
 
 # rsync -avz mks@qidi:~/fluidd-config/ fluidd-config/ --exclude ".git"
