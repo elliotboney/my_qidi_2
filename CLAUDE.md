@@ -29,7 +29,7 @@ This repo tracks custom/modified Klipper configuration files for a Qidi Q2 3D pr
   - `KAMP_Settings.cfg` — KAMP settings
   - Symlinks: `fluidd.cfg`, `timelapse.cfg`, `KAMP/` → submodules
 - `Qidi_Box.md` — Documentation on the Qidi Box system
-- `klippy_extras/` — Qidi's custom Klipper modules synced from the printer
+- `klippy_extras/` — Qidi's custom Klipper modules synced from the printer (gitignored — sync down on demand, not version-controlled)
   - Qidi runs a modified fork of Klipper, NOT mainline — see https://github.com/QIDITECH/klipper
   - Proprietary `.so` binaries (10 files, Qidi-added, closed-source, not editable):
     - `box_stepper.so`, `box_extras.so`, `box_rfid.so`, `box_detect.so` — Box hardware drivers
@@ -41,10 +41,10 @@ This repo tracks custom/modified Klipper configuration files for a Qidi Q2 3D pr
     - `echelon_stepper.py`, `closed_loop.py` — Custom stepper control
     - `autotune_tmc.py`, `motor_constants.py`, `motor_database.cfg` — TMC autotuning
     - `gcode_shell_command.py`, `probe_air.py` — Utility extensions
-  - Upstream Klipper extras have been removed — only Qidi-specific files are tracked
-  - Full set can be re-synced from printer if needed
+  - Full set can be re-synced from printer if needed (rsync brings in upstream Klipper extras too — that's fine, the whole dir is gitignored)
   - Synced from printer via: `rsync -avz mks@qidi:~/klipper/klippy/extras/ klippy_extras/ --exclude "__pycache__/"`
   - **Do NOT update to mainline Klipper** — Qidi's firmware depends on these custom modules
+- `docs/` — Reverse-engineered analysis of the proprietary `.so` modules (decompiled via radare2 + r2ghidra, 2026-03-22). Start at `docs/INDEX.md` for the table of contents; per-module reports under `docs/klippy_extras_decompiled/`. Reference these instead of re-decompiling.
 
 ## Git Submodules
 - `Klipper-Adaptive-Meshing-Purging/` — KAMP (adaptive bed mesh + purging)

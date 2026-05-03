@@ -3,3 +3,5 @@ backups/**
 
 
 printer_data/config/printer-20*.cfg
+
+klippy_extras/
